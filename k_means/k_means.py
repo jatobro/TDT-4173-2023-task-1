@@ -1,17 +1,21 @@
 import numpy as np 
-import pandas as pd 
+import pandas as pd
 # IMPORTANT: DO NOT USE ANY OTHER 3RD PARTY PACKAGES
 # (math, random, collections, functools, etc. are perfectly fine)
 
 
 class KMeans:
     
-    def __init__():
+    def __init__(self,  max_iter, cluster_count):
         # NOTE: Feel free add any hyperparameters 
         # (with defaults) as you see fit
-        pass
+        self.max_iter = max_iter
+
+        self.cluster_count = cluster_count
+        self.cluster_assignments = None
+        self.centroids = None
         
-    def fit(self, X):
+    def fit(self, X: pd.DataFrame):
         """
         Estimates parameters for the classifier
         
@@ -19,8 +23,33 @@ class KMeans:
             X (array<m,n>): a matrix of floats with
                 m rows (#samples) and n columns (#features)
         """
-        # TODO: Implement
-        raise NotImplemented()
+        # initialize data structure for cluster assignment
+        self.cluster_assignments = np.zeros(len(X), dtype=int)
+
+        # initialize centroids
+        idx = np.random.randint(X.shape[0], size=self.cluster_count)
+        self.centroids = X.loc[idx].to_numpy()
+       
+
+        # set initial cluster assignment to closest initial centroid
+        cross_distance = cross_euclidean_distance(X.to_numpy(), self.centroids)
+        self.cluster_assignments = np.argmin(cross_distance, axis=1)
+        
+        for i in range(self.max_iter):
+            # using mean of datapoints within each cluster to find new centroids
+            for i in range(self.cluster_count):
+                self.centroids[i] = X[self.cluster_assignments == i].mean(axis=0).to_numpy()
+
+            # assign new cluster to each datapoint and check if cluster assignment changes
+            cross_distance = cross_euclidean_distance(X.to_numpy(), self.centroids)
+            cluster_assignments_new = np.argmin(cross_distance, axis=1)
+
+            if np.array_equal(self.cluster_assignments, cluster_assignments_new):
+                break
+
+            self.cluster_assignments = cluster_assignments_new
+
+        
     
     def predict(self, X):
         """
@@ -38,8 +67,7 @@ class KMeans:
             there are 3 clusters, then a possible assignment
             could be: array([2, 0, 0, 1, 2, 1, 1, 0, 2, 2])
         """
-        # TODO: Implement 
-        raise NotImplemented()
+        return self.cluster_assignments
     
     def get_centroids(self):
         """
@@ -56,8 +84,7 @@ class KMeans:
             [xm_1, xm_2, ..., xm_n]
         ])
         """
-        pass
-    
+        return self.centroids
     
     
     
@@ -111,7 +138,7 @@ def euclidean_distortion(X, z):
     for i, c in enumerate(clusters):
         Xc = X[z == c]
         mu = Xc.mean(axis=0)
-        distortion += ((Xc - mu) ** 2).sum(axis=1)
+        distortion += ((Xc - mu) ** 2).sum()
         
     return distortion
 

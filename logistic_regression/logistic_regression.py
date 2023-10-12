@@ -6,10 +6,15 @@ import pandas as pd
 
 class LogisticRegression:
     
-    def __init__():
+    def __init__(self, learning_rate=0.01, max_iter=1000, epsilon=1e-15):
         # NOTE: Feel free add any hyperparameters 
         # (with defaults) as you see fit
-        pass
+        self.learning_rate = learning_rate
+        self.max_iter = max_iter
+        self.epsilon = epsilon
+
+        self.b = None
+        self.w = None
         
     def fit(self, X, y):
         """
@@ -21,8 +26,43 @@ class LogisticRegression:
             y (array<m>): a vector of floats containing 
                 m binary 0.0/1.0 labels
         """
-        # TODO: Implement
-        raise NotImplemented()
+        def dldb(sigmoid):
+            return (sigmoid-y).mean(axis = 0)
+
+        def dldw(sigmoid):
+            return ((sigmoid-y).values.reshape((len(X), 1))*X).mean(axis = 0)
+        
+        def update(a, g):
+            return a - (g * self.learning_rate)
+        
+        def has_converged(b, b_old, w, w_old):
+            if np.linalg.norm(b_old) != 0 and np.linalg.norm(w_old) != 0:
+                return np.linalg.norm(b - b_old) / np.linalg.norm(b_old) < self.epsilon and np.linalg.norm(w - w_old) / np.linalg.norm(w_old) < self.epsilon
+            return False
+
+        
+        
+        # initialize u
+        self.b = 0
+        self.w = np.zeros(X.shape[1])
+
+        for _ in range(self.max_iter):
+            y_h = self.predict(X)
+            sig = sigmoid(y_h)
+
+            gradient_b = dldb(sig)
+            gradient_w = dldw(sig)
+
+            b_old = self.b
+            w_old = self.w
+            
+            self.b = update(self.b, gradient_b)
+            self.w = update(self.w, gradient_w)
+
+            if has_converged(self.b, b_old, self.w, w_old):
+                break
+           
+
     
     def predict(self, X):
         """
@@ -38,8 +78,7 @@ class LogisticRegression:
             A length m array of floats in the range [0, 1]
             with probability-like predictions
         """
-        # TODO: Implement
-        raise NotImplemented()
+        return np.matmul(self.w, X.T) + self.b
         
 
         
