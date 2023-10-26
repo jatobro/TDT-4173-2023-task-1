@@ -6,15 +6,10 @@ import pandas as pd
 
 class LogisticRegression:
     
-    def __init__(self, learning_rate=0.01, max_iter=1000, epsilon=1e-15):
-        # NOTE: Feel free add any hyperparameters 
-        # (with defaults) as you see fit
-        self.learning_rate = learning_rate
-        self.max_iter = max_iter
-        self.epsilon = epsilon
-
-        self.b = None
-        self.w = None
+    def __init__(self, alpha=0.1, epochs=100, input_dimention=2):
+        self.weights = np.random.randn(input_dimention+1) * 0.01
+        self.alpha = alpha
+        self.epochs = epochs
         
     def fit(self, X, y):
         """
@@ -26,43 +21,23 @@ class LogisticRegression:
             y (array<m>): a vector of floats containing 
                 m binary 0.0/1.0 labels
         """
-        def dldb(sigmoid):
-            return (sigmoid-y).mean(axis = 0)
+        # TODO: Implement
 
-        def dldw(sigmoid):
-            return ((sigmoid-y).values.reshape((len(X), 1))*X).mean(axis = 0)
-        
-        def update(a, g):
-            return a - (g * self.learning_rate)
-        
-        def has_converged(b, b_old, w, w_old):
-            if np.linalg.norm(b_old) != 0 and np.linalg.norm(w_old) != 0:
-                return np.linalg.norm(b - b_old) / np.linalg.norm(b_old) < self.epsilon and np.linalg.norm(w - w_old) / np.linalg.norm(w_old) < self.epsilon
-            return False
+        # Batch gradient descent function:
 
-        
-        
-        # initialize u
-        self.b = 0
-        self.w = np.zeros(X.shape[1])
+        m = len(X)
+        X = np.c_[np.ones(m), np.array(X)] # Adding bias column
 
-        for _ in range(self.max_iter):
-            y_h = self.predict(X)
-            sig = sigmoid(y_h)
+        for i in range(self.epochs):
 
-            gradient_b = dldb(sig)
-            gradient_w = dldw(sig)
+            # Cost function:    
+            predictions = np.dot(X, self.weights)
+            predictions = sigmoid(predictions)
+            error = y - predictions
+            lms = np.dot(error, X)
 
-            b_old = self.b
-            w_old = self.w
-            
-            self.b = update(self.b, gradient_b)
-            self.w = update(self.w, gradient_w)
-
-            if has_converged(self.b, b_old, self.w, w_old):
-                break
-           
-
+            # Update weights
+            self.weights = self.weights + self.alpha * lms
     
     def predict(self, X):
         """
@@ -78,7 +53,10 @@ class LogisticRegression:
             A length m array of floats in the range [0, 1]
             with probability-like predictions
         """
-        return np.matmul(self.w, X.T) + self.b
+        m = len(X)
+        X = np.c_[np.ones(m), X] # Adding bias column
+
+        return sigmoid(np.dot(X, self.weights))
         
 
         
@@ -135,5 +113,3 @@ def sigmoid(x):
         Element-wise sigmoid activations of the input 
     """
     return 1. / (1. + np.exp(-x))
-
-        
